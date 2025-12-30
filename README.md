@@ -15,4 +15,4 @@ Un script PowerShell pour optimiser et nettoyer Windows.
 Lancez PowerShell en tant qu'administrateur et copiez-collez cette commande :
 
 ```powershell
-iwr -useb https://raw.githubusercontent.com/MaTows02/MaTows-Optimizer/main/matows-optimizerv1-1.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/MaTows02/MaTows-Optimizer/main/MaTowsOptimizerv1.5.1.ps1 | iex
