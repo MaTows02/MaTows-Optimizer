@@ -11,16 +11,8 @@ Un script PowerShell pour optimiser et nettoyer Windows.
 
 ## 🛠️ Utilisation
 
-### Méthode classique
-1.  Téléchargez le fichier `matows-optimizerv1.ps1`.
-2.  Ouvrez PowerShell en tant qu'administrateur.
-3.  Lancez le script :
-    ```powershell
-    .\matows-optimizerv1.ps1
-    ```
+### ⚡ Lancement rapide (Recommandé)
+Lancez PowerShell en tant qu'administrateur et copiez-collez cette commande :
 
-### ⚡ Installation rapide (Lien)
-*Une commande unique pour lancer le script directement sera ajoutée ici prochainement.*
-
-## ⚠️ Avertissement
-Ce script modifie des paramètres système. Utilisez-le à vos propres risques.
+```powershell
+iwr -useb [https://raw.githubusercontent.com/MaTows02/MaTows-Optimizer/main/matows-optimizerv1.ps1](https://raw.githubusercontent.com/MaTows02/MaTows-Optimizer/main/matows-optimizerv1.ps1) | iex
