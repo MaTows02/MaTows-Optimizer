@@ -1,6 +1,6 @@
 <#
     ===========================================================================
-    MATOWS UTILITY - V1.6 (FINAL FIX: LINKS & CLEANUP)
+    MATOWS UTILITY - V1.6 (RESTORE POINT + FORCE RESTART)
     ===========================================================================
 #>
 
@@ -245,7 +245,7 @@ Add-Type -AssemblyName PresentationFramework, System.Windows.Forms, System.Drawi
                                         <TextBlock Text="Version Pilote : " Foreground="Gray"/>
                                         <TextBlock Name="lblCPUDriver" Text="..." FontWeight="Bold"/>
                                     </StackPanel>
-                                    <Button Name="linkCPU" Content="[ RECHERCHER PILOTES (OFFICIEL) ]" Style="{StaticResource LinkBtn}"/>
+                                    <Button Name="linkCPU" Content="[ TELECHARGER PILOTES (OFFICIEL) ]" Style="{StaticResource LinkBtn}"/>
                                 </StackPanel>
                             </Border>
 
@@ -257,7 +257,7 @@ Add-Type -AssemblyName PresentationFramework, System.Windows.Forms, System.Drawi
                                         <TextBlock Text="Version Pilote : " Foreground="Gray"/>
                                         <TextBlock Name="lblGPUDriver" Text="..." FontWeight="Bold"/>
                                     </StackPanel>
-                                    <Button Name="linkGPU" Content="[ RECHERCHER PILOTES (OFFICIEL) ]" Style="{StaticResource LinkBtn}"/>
+                                    <Button Name="linkGPU" Content="[ TELECHARGER PILOTES (OFFICIEL) ]" Style="{StaticResource LinkBtn}"/>
                                 </StackPanel>
                             </Border>
 
@@ -671,7 +671,15 @@ function Update-Dashboard {
     $window.FindName("lblCPUDriver").Text = $cpuVer
     $window.FindName("lblCPUDriver").Foreground = "#2ECC71"
 
-    $window.FindName("linkCPU").Add_Click({ Open-DriverPage "CPU" })
+    # IMPORTANT : On capture le nom du CPU dans une variable locale pour le clic
+    $finalCpuName = $cleanCPU
+    # On stocke le nom propre dans le Tag du bouton pour eviter le bug de variable
+    $btnCPU = $window.FindName("linkCPU")
+    $btnCPU.Tag = $finalCpuName
+    # On retire les anciens event handlers pour eviter les doublons lors du refresh
+    $btnCPU.Remove_Click($btnCPU_Click)
+    $btnCPU_Click = { Open-DriverPage "CPU" }
+    $btnCPU.Add_Click($btnCPU_Click)
 
     # 5. GPU (SMART)
     $gpu = Get-CimInstance Win32_VideoController | Select-Object -First 1
@@ -684,7 +692,12 @@ function Update-Dashboard {
     $window.FindName("lblGPUDriver").Text = $gpuVer
     $window.FindName("lblGPUDriver").Foreground = "#2ECC71"
 
-    $window.FindName("linkGPU").Add_Click({ Open-DriverPage "GPU" })
+    $finalGpuName = $cleanGPU
+    $btnGPU = $window.FindName("linkGPU")
+    $btnGPU.Tag = $finalGpuName
+    $btnGPU.Remove_Click($btnGPU_Click)
+    $btnGPU_Click = { Open-DriverPage "GPU" }
+    $btnGPU.Add_Click($btnGPU_Click)
 
     # 6. RAM
     $mem = Get-CimInstance Win32_PhysicalMemory
@@ -706,7 +719,11 @@ function Update-Dashboard {
     $bios = Get-CimInstance Win32_BIOS
     $window.FindName("lblBIOS").Text = "$($bios.SMBIOSBIOSVersion)"
     
-    $window.FindName("linkMobo").Add_Click({ Open-DriverPage "MOBO" })
+    $btnMobo = $window.FindName("linkMobo")
+    $btnMobo.Tag = $fullMobo
+    $btnMobo.Remove_Click($btnMobo_Click)
+    $btnMobo_Click = { Open-DriverPage "MOBO" }
+    $btnMobo.Add_Click($btnMobo_Click)
     
     Log "Scan termine."
 }
@@ -846,7 +863,12 @@ $window.FindName("btnInstall").Add_Click({
 
 $window.FindName("btnRun").Add_Click({
     Log "Application Tweaks..."
-    if ($window.FindName("tw_Restore").IsChecked) { Checkpoint-Computer -Description "MaTows" -RestorePointType "MODIFY_SETTINGS" }
+    if ($window.FindName("tw_Restore").IsChecked) { 
+        Log "Creation Point de Restauration (Patientez)..."
+        # Force enable restore
+        Enable-ComputerRestore -Drive "C:\" -ErrorAction SilentlyContinue
+        Checkpoint-Computer -Description "MaTows" -RestorePointType "MODIFY_SETTINGS" -ErrorAction SilentlyContinue
+    }
     if ($window.FindName("tw_Temp").IsChecked) { Remove-Item "$env:TEMP\*" -Recurse -Force }
     
     $v = if ($window.FindName("tw_Telem").IsChecked) { 0 } else { 1 }
@@ -880,8 +902,10 @@ $window.FindName("btnRun").Add_Click({
     if ($window.FindName("tw_Mnu").IsChecked) { New-Item "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" -Force | Out-Null; Set-ItemProperty "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" "(default)" "" -Force }
     if ($window.FindName("tw_OO").IsChecked) { $u="https://dl5.oo-software.com/files/ooshutup10/OOSU10.exe"; $d="$env:TEMP\OOSU10.exe"; Invoke-WebRequest $u -OutFile $d; Start-Process $d }
 
-    Stop-Process -Name explorer -ErrorAction SilentlyContinue
-    Log "Tweaks appliques."
+    Log "Termine. Redemarrage conseille."
+    # Force Restart Message
+    $res = [System.Windows.Forms.MessageBox]::Show("Optimisation terminée.`nLe PC va redémarrer pour appliquer les changements.", "MaTows Utility", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+    if ($res -eq "OK") { Restart-Computer -Force }
 })
 
 $window.FindName("btnFeat").Add_Click({
